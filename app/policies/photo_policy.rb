@@ -1,4 +1,17 @@
 class PhotoPolicy < ApplicationPolicy
+  class Scope < Scope
+    def resolve
+      if user.present?
+        # Photo belong to user OR their followers OR public users
+        scope.where('photos.owner_id = ? OR photos.owner_id IN (?) OR photos.owner_id IN (?)',
+                    user.id, user.following_ids, User.where(private: false).pluck(:id))
+      else
+        # Photos belong to public users
+        scope.where(owner_id: User.where(private: false).pluck(:id))
+      end
+    end
+  end
+
   attr_reader :user, :photo
 
   def initialize(user, photo)

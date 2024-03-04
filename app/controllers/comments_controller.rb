@@ -1,10 +1,21 @@
 class CommentsController < ApplicationController
-  before_action :set_comment, only: %i[ show edit update destroy ]
-  before_action :is_an_authorized_user, only: [:destroy, :create]
+  before_action :set_comment, only: %i[show edit update destroy]
+  before_action :set_photo, only: [:create], if: -> { params[:comment][:photo_id].present? }
+  before_action :authorize_resource, except: [:index, :new, :create]
+  before_action :authorize_create_action, only: [:create]
 
-  # GET /comments or /comments.json
+  skip_before_action :authorize_resource, only: [:index, :new, :create], raise: false
+
+  after_action :verify_authorized, except: [:index, :new, :create]
+  after_action :verify_policy_scoped, only: [:index]
+
+  rescue_from ActiveRecord::RecordNotFound, with: :record_not_found
+  rescue_from Pundit::NotAuthorizedError, with: :user_not_authorized
+
+  # GET /comments
   def index
-    @comments = Comment.all
+    # Including associations to avoid N+1 queries
+    @comments = policy_scope(Comment).includes(:author, :photo)
   end
 
   # GET /comments/1 or /comments/1.json
@@ -20,14 +31,12 @@ class CommentsController < ApplicationController
   def edit
   end
 
-  # POST /comments or /comments.json
+  # POST /comments
   def create
-    @comment = Comment.new(comment_params)
-    @comment.author = current_user
-
+    @comment = @photo.comments.build(comment_params.merge(author: current_user))
     respond_to do |format|
       if @comment.save
-        format.html { redirect_back fallback_location: root_path, notice: "Comment was successfully created." }
+        format.html { redirect_to @photo, notice: 'Comment was successfully created.' }
         format.json { render :show, status: :created, location: @comment }
       else
         format.html { render :new, status: :unprocessable_entity }
@@ -36,11 +45,11 @@ class CommentsController < ApplicationController
     end
   end
 
-  # PATCH/PUT /comments/1 or /comments/1.json
+  # PATCH/PUT /comments/1
   def update
     respond_to do |format|
       if @comment.update(comment_params)
-        format.html { redirect_to root_url, notice: "Comment was successfully updated." }
+        format.html { redirect_to @comment, notice: 'Comment was successfully updated.' }
         format.json { render :show, status: :ok, location: @comment }
       else
         format.html { render :edit, status: :unprocessable_entity }
@@ -49,30 +58,42 @@ class CommentsController < ApplicationController
     end
   end
 
-  # DELETE /comments/1 or /comments/1.json
+  # DELETE /comments/1
   def destroy
     @comment.destroy
     respond_to do |format|
-      format.html { redirect_back fallback_location: root_url, notice: "Comment was successfully destroyed." }
+      format.html { redirect_to comments_url, notice: 'Comment was successfully destroyed.' }
       format.json { head :no_content }
     end
   end
 
   private
-    # Use callbacks to share common setup or constraints between actions.
-    def set_comment
-      @comment = Comment.find(params[:id])
-    end
 
-    def is_an_authorized_user
-      @photo = Photo.find(params.fetch(:comment).fetch(:photo_id))
-      if current_user != @photo.owner && @photo.owner.private? && !current_user.leaders.include?(@photo.owner)
-        redirect_back fallback_location: root_url, alert: "Not authorized"
-      end
-    end
+  def set_comment
+    @comment = Comment.find(params[:id])
+  end
 
-    # Only allow a list of trusted parameters through.
-    def comment_params
-      params.require(:comment).permit(:author_id, :photo_id, :body)
-    end
+  def set_photo
+    @photo = Photo.find(params[:comment][:photo_id])
+  end
+
+  def authorize_resource
+    authorize @comment || Comment
+  end
+
+  def authorize_create_action
+    authorize @photo, :show?
+  end
+
+  def comment_params
+    params.require(:comment).permit(:photo_id, :body)
+  end
+
+  def record_not_found
+    redirect_to comments_path, alert: 'Comment not found.'
+  end
+
+  def user_not_authorized
+    redirect_to(request.referrer || root_path, alert: 'You are not authorized to perform this action.')
+  end
 end

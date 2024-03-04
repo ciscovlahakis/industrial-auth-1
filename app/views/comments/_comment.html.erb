@@ -10,13 +10,17 @@
       <p><%= comment.body %></p>
     </div>
     <div>
+    <% if policy(comment).update? %>
       <%= link_to edit_comment_path(comment), class: "btn btn-link btn-sm text-muted" do %>
         <i class="fas fa-edit fa-fw"></i>
       <% end %>
+    <% end %>
 
+    <% if policy(comment).destroy? %>
       <%= link_to comment, data: { turbo_method: :delete }, class: "btn btn-link btn-sm text-muted" do %>
         <i class="fas fa-trash fa-fw"></i>
       <% end %>
+    <% end %>
     </div>
   </div>
 </li>

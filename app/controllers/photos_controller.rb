@@ -1,10 +1,15 @@
 class PhotosController < ApplicationController
-  before_action :set_photo, only: %i[ show edit update destroy ]
-  before_action :ensure_current_user_is_owner, only: [:destroy, :update, :edit]
+  before_action :set_photo, only: %i[show edit update destroy]
+  before_action :authorize_resource, except: [:index, :new, :create]
+
+  skip_before_action :authorize_resource, only: [:index, :new, :create], raise: false
+  
+  rescue_from ActiveRecord::RecordNotFound, with: :record_not_found
+  rescue_from Pundit::NotAuthorizedError, with: :user_not_authorized
 
   # GET /photos or /photos.json
   def index
-    @photos = Photo.all
+    @photos = policy_scope(Photo.all)
   end
 
   # GET /photos/1 or /photos/1.json
@@ -51,36 +56,31 @@ class PhotosController < ApplicationController
 
   # DELETE /photos/1 or /photos/1.json
   def destroy
-    if current_user == @photo.owner
-      @photo.destroy
-
-      respond_to do |format|
-        format.html { redirect_back fallback_location: root_url, notice: "Photo was successfully destroyed." }
-        format.json { head :no_content }
-      end
-    else
-      redirect_back(fallback_location: root_url, notice: "Nice try, but that is not your photo.")
+    @photo.destroy
+    respond_to do |format|
+      format.html { redirect_to photos_url, notice: "Photo was successfully destroyed." }
+      format.json { head :no_content }
     end
   end
 
   private
-    # Use callbacks to share common setup or constraints between actions.
     def set_photo
       @photo = Photo.find(params[:id])
     end
 
-    def ensure_current_user_is_owner
-      if current_user != @photo.owner
-        redirect_back fallback_location: root_url, alert: "You're not authorized for that."
-      end
+    def authorize_resource
+      authorize @photo || Photo
     end
 
-    def show
-      authorize @photo
-    end
-
-    # Only allow a list of trusted parameters through.
     def photo_params
-      params.require(:photo).permit(:image, :comments_count, :likes_count, :caption, :owner_id)
+      params.require(:photo).permit(:image, :caption)
+    end
+
+    def record_not_found
+      redirect_to photos_path, alert: 'Photo not found.'
+    end
+
+    def user_not_authorized
+      redirect_to(request.referrer || root_path, alert: 'You are not authorized to perform this action.')
     end
 end
