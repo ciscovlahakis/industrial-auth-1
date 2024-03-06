@@ -5,7 +5,6 @@ class PhotosController < ApplicationController
   skip_before_action :authorize_resource, only: [:index, :new, :create], raise: false
   
   rescue_from ActiveRecord::RecordNotFound, with: :record_not_found
-  rescue_from Pundit::NotAuthorizedError, with: :user_not_authorized
 
   # GET /photos or /photos.json
   def index
@@ -78,9 +77,5 @@ class PhotosController < ApplicationController
 
     def record_not_found
       redirect_to photos_path, alert: 'Photo not found.'
-    end
-
-    def user_not_authorized
-      redirect_to(request.referrer || root_path, alert: 'You are not authorized to perform this action.')
     end
 end

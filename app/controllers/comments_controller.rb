@@ -10,7 +10,6 @@ class CommentsController < ApplicationController
   after_action :verify_policy_scoped, only: [:index]
 
   rescue_from ActiveRecord::RecordNotFound, with: :record_not_found
-  rescue_from Pundit::NotAuthorizedError, with: :user_not_authorized
 
   # GET /comments
   def index
@@ -91,9 +90,5 @@ class CommentsController < ApplicationController
 
   def record_not_found
     redirect_to comments_path, alert: 'Comment not found.'
-  end
-
-  def user_not_authorized
-    redirect_to(request.referrer || root_path, alert: 'You are not authorized to perform this action.')
   end
 end
