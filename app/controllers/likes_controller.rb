@@ -1,7 +1,7 @@
 class LikesController < ApplicationController
   before_action :set_like, only: [:destroy]
   before_action :set_photo, only: [:create]
-  before_action :authorize_resource, except: [:index, :new, :create]
+  before_action :authorize_resource
   before_action :authorize_create_action, only: [:create]
   
   rescue_from ActiveRecord::RecordNotFound, with: :record_not_found

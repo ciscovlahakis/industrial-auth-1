@@ -1,13 +1,8 @@
 class CommentsController < ApplicationController
   before_action :set_comment, only: %i[show edit update destroy]
   before_action :set_photo, only: [:create], if: -> { params[:comment][:photo_id].present? }
-  before_action :authorize_resource, except: [:index, :new, :create]
+  before_action :authorize_resource, except: [:create]
   before_action :authorize_create_action, only: [:create]
-
-  skip_before_action :authorize_resource, only: [:index, :new, :create], raise: false
-
-  after_action :verify_authorized, except: [:index, :new, :create]
-  after_action :verify_policy_scoped, only: [:index]
 
   rescue_from ActiveRecord::RecordNotFound, with: :record_not_found
 
