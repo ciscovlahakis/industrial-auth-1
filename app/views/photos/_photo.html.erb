@@ -7,21 +7,19 @@
 
     <div>
       <% if policy(photo).show? %>
-        <% if current_user == photo.owner %>
-          <%= link_to edit_photo_path(photo), class: "btn btn-link btn-sm text-muted" do %>
-            <i class="fas fa-edit fa-fw"></i>
-          <% end %>
+        <%= link_to edit_photo_path(photo), class: "btn btn-link btn-sm text-muted" do %>
+          <i class="fas fa-edit fa-fw"></i>
+        <% end %>
 
-          <%= link_to photo, method: :delete, class: "btn btn-link btn-sm text-muted", data: { confirm: "Are you sure?" } do %>
-            <i class="fas fa-trash fa-fw"></i>
-          <% end %>
+        <%= link_to photo, method: :delete, class: "btn btn-link btn-sm text-muted", data: { confirm: "Are you sure?" } do %>
+          <i class="fas fa-trash fa-fw"></i>
         <% end %>
       <% end %>
     </div>
   </div>
 
   <%= image_tag photo.image, class: "img-fluid" %>
-  
+
   <div class="card-body">
     <p class="card-text"><%= photo.caption %></p>
   </div>
@@ -31,7 +29,7 @@
       <%= render "comments/comment", comment: comment %>
     <% end %>
   </ul>
-  
+
   <div class="card-body">
     <% if policy(photo).show? %>
       <%= render "comments/form", comment: photo.comments.build %>
