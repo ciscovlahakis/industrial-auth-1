@@ -23,7 +23,7 @@
         <td><%= photo.owner_id %></td>
         <td><%= link_to 'Show', photo %></td>
         <td><%= link_to 'Edit', edit_photo_path(photo) %></td>
-        <td><%= link_to 'Destroy', photo, data: { turbo_method: :delete }, data: { confirm: 'Are you sure?' } %></td>
+        <td><%= link_to 'Destroy', photo, data: { turbo_method: :delete } %></td>
       </tr>
     <% end %>
   </tbody>
