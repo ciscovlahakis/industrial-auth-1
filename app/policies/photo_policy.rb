@@ -24,11 +24,11 @@ class PhotoPolicy < ApplicationPolicy
   end
 
   def update?
-    true
+    @user.id == @photo.owner_id
   end
 
-  def destroy
-    true
+  def destroy?
+    update?
   end
 
     # Our policy is that a photo should only be seen by the owner or followers

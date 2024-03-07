@@ -70,7 +70,7 @@ class FollowRequestsController < ApplicationController
     end
 
     def follow_request_params
-      params.require(:follow_request).permit(:recipient_id)
+      params.require(:follow_request).permit(:recipient_id, :sender_id, :status)
     end
 
     def record_not_found
